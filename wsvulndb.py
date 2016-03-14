@@ -37,15 +37,23 @@ def check_vuln_status(name,version,report,type):
 	tag["plugins"]="plugin"
 	tag["themes"]="theme"
 	r=requests.get("https://wpvulndb.com/api/v1/"+type+"/" + name)
+	#print "https://wpvulndb.com/api/v1/"+type+"/" + name
 	if r.status_code == 404:
 		if not report:
+			#print "(404)"
+			#print "https://wpvulndb.com/api/v1/"+type+"/" + name
 			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name.capitalize() + " : Doesn't have any Reported Security Issue " + bcolors.ENDC
 	else:
 		data = json.loads(r.text)
 		for x in data[tag[type]]["vulnerabilities"]:
+			#print "Is vulnerable"
 			#return str(x)
 			if x.has_key("fixed_in"):
+				#print "version: " + version 
+				#print "fixed in: " + str(versiontuple(x["fixed_in"]))
+				#print "versiontuple: " + str(versiontuple(version))
 				if versiontuple(x["fixed_in"]) > versiontuple(version):
+					print "Fixed.."
 					if tag[type] == "wordpress":
 						name="core"
 					if vuln==0:
@@ -77,13 +85,13 @@ def cmd_exists(cmd):
 
 def main(argv):
 	desc="""This program is used to run a quick wordpress scan via wpscan api. This command depends on wordshell"""
-	epilog="""Credit (C) Anant Shrivastava http://anantshri.info"""
+	epilog="""Credit (C) Anant Shrivastava http://anantshri.info - original code.  With modifications by mikeybeck"""
 	parser = argparse.ArgumentParser(description=desc,epilog=epilog)
 	parser.add_argument("--site",help="Provide site",dest='site',required=True)
 	parser.add_argument("--vulnonly",help="Only List vulnerable Items",action="store_true")
 	if not cmd_exists("wordshell"):
 		print "Wordshell needs to be in path as executable named as wordshell"
-		print "Visit http://wp-cli.org to download and install it"
+		print "Visit http://wordshell.net to purchase"
 		exit()
 	x=parser.parse_args()
 	wshellsite=x.site
@@ -91,22 +99,27 @@ def main(argv):
 
 	
 	#runProcess(("wordshell "+wshellsite+" --list").split())
+	# Check Core Issues
+	cmd="wordshell " + wshellsite + " --list --core"
+	xinp=[]
+	for line in runProcess(cmd.split()):
+		if line != "":
+			#if line.strip() != "name,version":
+			line = ' '.join(line.split()).split(" ")[3]
+			xinp.append(line)
+			print "Wordpress version: " + line
+
+	for x in xinp:
+		y=x.replace(".","").strip()
+		# Hacked code here version is sent instead of plugin name and plug name is marked as blank
+		x = x[4:].replace(" ", "")
+		out=check_vuln_status(y,x,report,"wordpresses")
+		if out.strip() is not "":
+			print out.strip()
+	
+
 	# Check Plugin Issues
 	cmd="wordshell " + wshellsite + " --list"
-	xinp=[]
-
-	#out=check_vuln_status("woocommerce",'2.3.5',report,"plugins")
-	#if out.strip() is not "":
-	#	print out.strip()
-
-	#out=check_vuln_status("simple-ads-manager",'2.9.4.116',report,"plugins")
-	#if out.strip() is not "":
-	#	print out.strip()
-    
-	#out=check_vuln_status(zzz,versn,report,"plugins")
-	#if out.strip() is not "":
-	#	print out.strip()
-	
 
 	xinp=[]
 	for line in runProcess(cmd.split()):
