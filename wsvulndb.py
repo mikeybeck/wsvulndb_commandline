@@ -53,7 +53,7 @@ def check_vuln_status(name,version,report,type):
 				#print "fixed in: " + str(versiontuple(x["fixed_in"]))
 				#print "versiontuple: " + str(versiontuple(version))
 				if versiontuple(x["fixed_in"]) > versiontuple(version):
-					print "Fixed.."
+					#print "Fixed.."
 					if tag[type] == "wordpress":
 						name="core"
 					if vuln==0:
@@ -83,6 +83,7 @@ def cmd_exists(cmd):
         stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 
+
 def main(argv):
 	desc="""This program is used to run a quick wordpress scan via wpscan api. This command depends on wordshell"""
 	epilog="""Credit (C) Anant Shrivastava http://anantshri.info - original code.  With modifications by mikeybeck"""
@@ -97,122 +98,91 @@ def main(argv):
 	wshellsite=x.site
 	report=x.vulnonly
 
-	
-	#runProcess(("wordshell "+wshellsite+" --list").split())
-	# Check Core Issues
-	cmd="wordshell " + wshellsite + " --list --core"
-	xinp=[]
-	for line in runProcess(cmd.split()):
-		if line != "":
-			#if line.strip() != "name,version":
-			line = ' '.join(line.split()).split(" ")[3]
-			xinp.append(line)
-			print "Wordpress version: " + line
-
-	for x in xinp:
-		y=x.replace(".","").strip()
-		# Hacked code here version is sent instead of plugin name and plug name is marked as blank
-		x = x[4:].replace(" ", "")
-		out=check_vuln_status(y,x,report,"wordpresses")
-		if out.strip() is not "":
-			print out.strip()
-	
-
-	# Check Plugin Issues
-	cmd="wordshell " + wshellsite + " --list"
-
-	xinp=[]
-	for line in runProcess(cmd.split()):
-		if line != "":
-			#if line.strip() != "name,version":
-			xinp.append(line)
-			print line
-	for x in xinp:
-		y = x.strip(wshellsite).replace(".php", "")
-		#y = y.split("    ")
-		#print y.strip()
-		
-		y = y.split(wshellsite,1)[1]
-		#yArr = y.split(" ")
-		name2 = y.split(" ")[2].replace(" ", "")
-		name = "".join(name2.split())
-		#if "." in name:
-		#	name = name.split(".")[0]
-		version = y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip().split(" ")[0]		#print y.split(name)
-		version = "".join(version.split())
-		#y = y.strip()
-		#print y.strip()
-		#print y.replace(" ", "")
-		name = name[6:]
-		version = version[4:]
-
-		print ""
-		print name + " " + version
-		#print "simple-ads-manager" + " " + "2.9.4.116"
-
-		#delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
-		#name = name.translate(None, delchars)
-		#version = version.translate(None, delchars)
-
-		#import re
-		#name = re.sub(r'\W+', '', name)
-		#version = re.sub(r'\W+', '', version)
-
-		#f = open('workfile.txt', 'r+')
-		#f.write(name + " " + version)
-		#f.write("\r\n")
-		#f.write("simple-ads-manager" + " " + "2.9.4.116")
-		#with open("test.txt", "a") as myfile:
-		#    myfile.write(name + " " + version + "\r\n")
-		out=check_vuln_status(name,version,report,"plugins")
-		if out.strip() is not "":
-			print out.strip()
-
-	'''
-
-	for line in runProcess(cmd.split()):
-		print 1.5
-		if line != "":
-			xinp.append(line)
-			print 1.7
-			print line
-
-
-	print 2
-	for x in xinp:
-		print 3
-		y=x.replace(".","").strip()
-		print 3.5
-		print y
-		# Hacked code here version is sent instead of plugin name and plug name is marked as blank
-		out=check_vuln_status(y,x.strip(),report,"wordpresses")
-		print 3.7
-		if out.strip() is not "":
-			print out.strip()
-			print 4
-	cmd="wordshell --site=" + wshellsite + " theme list --format=csv --fields=name,version"
-	xinp=[]
-	for line in runProcess(cmd.split()):
-		if line != "":
-			if line.strip() != "name,version":
+	def check_core():
+		# Check Core Issues
+		cmd="wordshell " + wshellsite + " --list --core"
+		xinp=[]
+		for line in runProcess(cmd.split()):
+			if line != "":
+				#if line.strip() != "name,version":
+				line = ' '.join(line.split()).split(" ")[3]
 				xinp.append(line)
-	for x in xinp:
-		y=x.split(",")
-		out=check_vuln_status(y[0],y[1],report,"themes")
-		if out.strip() is not "":
-			print out.strip()
-	cmd="wp --path=" + wpbase + " plugin list --format=csv --fields=name,version"
-	xinp=[]
-	for line in runProcess(cmd.split()):
-		if line != "":
-			if line.strip() != "name,version":
+				print "Wordpress version: " + line
+
+		for x in xinp:
+			y=x.replace(".","").strip()
+			# Hacked code here version is sent instead of plugin name and plug name is marked as blank
+			x = x[4:].replace(" ", "")
+			out=check_vuln_status(y,x,report,"wordpresses")
+			if out.strip() is not "":
+				print out.strip()
+
+
+	def check(type):
+
+		if type == 'plugins':
+			# Check Plugin Issues
+			cmd="wordshell " + wshellsite + " --list"
+		elif type == 'themes':
+			# Check theme issues
+			cmd="wordshell " + wshellsite + " --list --theme"
+		else:
+			check_core()
+			return
+
+		xinp=[]
+		for line in runProcess(cmd.split()):
+			if line != "":
+				#if line.strip() != "name,version":
 				xinp.append(line)
-	for x in xinp:
-		y=x.split(",")
-		out=check_vuln_status(y[0],y[1],report,"plugins")
-		if out.strip() is not "":
-			print out.strip()
-	'''
+				#print line
+		for x in xinp:
+			y = x.strip(wshellsite).replace(".php", "")
+			#y = y.split("    ")
+			#print y.strip()
+			
+			y = y.split(wshellsite,1)[1]
+			#yArr = y.split(" ")
+			name2 = y.split(" ")[2].replace(" ", "")
+			name = "".join(name2.split())
+			#if "." in name:
+			#	name = name.split(".")[0]
+			version = y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip().split(" ")[0]		#print y.split(name)
+			version = "".join(version.split())
+			#y = y.strip()
+			#print y.strip()
+			#print y.replace(" ", "")
+			name = name[6:]
+			version = version[4:]
+
+			print ""
+			print name + " " + version
+			#print "simple-ads-manager" + " " + "2.9.4.116"
+
+			#delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
+			#name = name.translate(None, delchars)
+			#version = version.translate(None, delchars)
+
+			#import re
+			#name = re.sub(r'\W+', '', name)
+			#version = re.sub(r'\W+', '', version)
+
+			#f = open('workfile.txt', 'r+')
+			#f.write(name + " " + version)
+			#f.write("\r\n")
+			#f.write("simple-ads-manager" + " " + "2.9.4.116")
+			#with open("test.txt", "a") as myfile:
+			#    myfile.write(name + " " + version + "\r\n")
+			out=check_vuln_status(name,version,report,type)
+			if out.strip() is not "":
+				print out.strip()
+
+
+
+	check('core')
+	check('themes')
+	check('plugins')
+
 
 
 if __name__ == "__main__":
