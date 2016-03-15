@@ -29,7 +29,7 @@ def runProcess(exe):
       if(retcode is not None):
         break
 
-def check_vuln_status(name,version,report,type):
+def check_vuln_status(name,version,report,type,debug):
 	out=""
 	vuln=0
 	tag = {}
@@ -37,11 +37,12 @@ def check_vuln_status(name,version,report,type):
 	tag["plugins"]="plugin"
 	tag["themes"]="theme"
 	r=requests.get("https://wpvulndb.com/api/v1/"+type+"/" + name)
-	#print "https://wpvulndb.com/api/v1/"+type+"/" + name
+	if debug:
+		print "https://wpvulndb.com/api/v1/"+type+"/" + name
 	if r.status_code == 404:
 		if not report:
-			#print "(404)"
-			#print "https://wpvulndb.com/api/v1/"+type+"/" + name
+			if debug:
+				print "(404)"
 			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
 	else:
 		data = json.loads(r.text)
@@ -67,6 +68,8 @@ def check_vuln_status(name,version,report,type):
 						if not report:
 							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
 						else:
+							if debug:
+								print "Nothing..."
 							#print "-------------------1----------------"
 							out = ""
 						# vuln=0
@@ -93,6 +96,7 @@ def main(argv):
 	parser.add_argument("--coreonly",help="Only check core",action="store_true")
 	parser.add_argument("--themesonly",help="Only check themes",action="store_true")
 	parser.add_argument("--pluginsonly",help="Only check plugins",action="store_true")
+	parser.add_argument("--debug",help="Prints extra info about what's going on",action="store_true")
 	if not cmd_exists("wordshell"):
 		print "Wordshell needs to be in path as executable named as wordshell"
 		print "Visit http://wordshell.net to purchase"
@@ -103,6 +107,7 @@ def main(argv):
 	coreonly=x.coreonly
 	themesonly=x.themesonly
 	pluginsonly=x.pluginsonly
+	debug=x.debug
 
 	def check_core():
 		# Check Core Issues
@@ -116,13 +121,14 @@ def main(argv):
 				#if line.strip() != "name,version":
 				line = ' '.join(line.split()).split(" ")[3]
 				xinp.append(line)
-				print "Wordpress version: " + line
+				if debug:
+					print "Wordpress version: " + line
 
 		for x in xinp:
 			y=x.replace(".","").strip()
 			# Hacked code here version is sent instead of plugin name and plug name is marked as blank
 			x = x[4:].replace(" ", "")
-			out=check_vuln_status(y,x,report,"wordpresses")
+			out=check_vuln_status(y,x,report,"wordpresses", debug)
 			if out.strip() is not "":
 				print out.strip()
 
@@ -149,7 +155,8 @@ def main(argv):
 				#if line.strip() != "name,version":
 				if "WARNING:" not in line and wshellsite in line:
 					xinp.append(line)
-					#print line
+					if debug:
+						print line
 					#with open("test.txt", "a") as myfile:
 					#    zz = str(line.split())
 					#    myfile.write(zz)
@@ -165,8 +172,9 @@ def main(argv):
 			#yArr = y.split(" ")
 			#\y = filter(None, y)
 			#y = ' '.join(y).split()
-			print y
-			print y.split()
+			if debug:
+				print y
+				print y.split()
 			name2 = y.split()[2].replace(" ", "")
 			name = name2
 
@@ -177,7 +185,8 @@ def main(argv):
 			#print y
 			#print y.split(" ")
 			#print name2
-			print name
+			if debug:
+				print name
 			#print y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip()
 			version = y.split(name2)[1].strip().split(" ")[0]		
 
@@ -190,7 +199,8 @@ def main(argv):
 			#y = y.strip()
 			#print y.strip()
 			#print y.replace(" ", "")
-			print version
+			if debug:
+				print version
 			name = name[:]
 			version = version[4:]
 
@@ -199,7 +209,8 @@ def main(argv):
 			#		    myfile.write(name + " " + "1.0")
 
 			#print ""
-			print name + " " + version
+			if debug:
+				print name + " " + version
 			#print name + " " + "1.0"
 			#print "simple-ads-manager" + " " + "2.9.4.116"
 
@@ -217,9 +228,10 @@ def main(argv):
 			#f.write("simple-ads-manager" + " " + "2.9.4.116")
 			#with open("test.txt", "a") as myfile:
 			#    myfile.write(name + " " + version + "\r\n")
-			out=check_vuln_status(name,version,report,type)
+			out=check_vuln_status(name,version,report,type, debug)
 			if out.strip() is not "":
 				print out.strip()
+
 
 
 	if coreonly:
