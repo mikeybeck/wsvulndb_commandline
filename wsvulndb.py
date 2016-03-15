@@ -42,7 +42,7 @@ def check_vuln_status(name,version,report,type):
 		if not report:
 			#print "(404)"
 			#print "https://wpvulndb.com/api/v1/"+type+"/" + name
-			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name.capitalize() + " : Doesn't have any Reported Security Issue " + bcolors.ENDC
+			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
 	else:
 		data = json.loads(r.text)
 		for x in data[tag[type]]["vulnerabilities"]:
@@ -65,7 +65,7 @@ def check_vuln_status(name,version,report,type):
 				else:
 					if vuln == 0:
 						if not report:
-							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name.capitalize() + " : Doesn't have any Reported Security Issue " + bcolors.ENDC
+							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
 						else:
 							#print "-------------------1----------------"
 							out = ""
@@ -86,10 +86,13 @@ def cmd_exists(cmd):
 
 def main(argv):
 	desc="""This program is used to run a quick wordpress scan via wpscan api. This command depends on wordshell"""
-	epilog="""Credit (C) Anant Shrivastava http://anantshri.info - original code.  With modifications by mikeybeck"""
+	epilog="""Credit (C) Anant Shrivastava http://anantshri.info - original code.  With Wordshell compatibility modifications by mikeybeck"""
 	parser = argparse.ArgumentParser(description=desc,epilog=epilog)
 	parser.add_argument("--site",help="Provide site",dest='site',required=True)
 	parser.add_argument("--vulnonly",help="Only List vulnerable Items",action="store_true")
+	parser.add_argument("--coreonly",help="Only check core",action="store_true")
+	parser.add_argument("--themesonly",help="Only check themes",action="store_true")
+	parser.add_argument("--pluginsonly",help="Only check plugins",action="store_true")
 	if not cmd_exists("wordshell"):
 		print "Wordshell needs to be in path as executable named as wordshell"
 		print "Visit http://wordshell.net to purchase"
@@ -97,10 +100,16 @@ def main(argv):
 	x=parser.parse_args()
 	wshellsite=x.site
 	report=x.vulnonly
+	coreonly=x.coreonly
+	themesonly=x.themesonly
+	pluginsonly=x.pluginsonly
 
 	def check_core():
 		# Check Core Issues
 		cmd="wordshell " + wshellsite + " --list --core"
+		print "Syncing & checking core"
+		runProcess(cmd)
+
 		xinp=[]
 		for line in runProcess(cmd.split()):
 			if line != "":
@@ -123,40 +132,75 @@ def main(argv):
 		if type == 'plugins':
 			# Check Plugin Issues
 			cmd="wordshell " + wshellsite + " --list"
+			print "Syncing & checking plugins"
 		elif type == 'themes':
 			# Check theme issues
 			cmd="wordshell " + wshellsite + " --list --theme"
+			print "Syncing & checking themes"
 		else:
 			check_core()
 			return
+
+		runProcess(cmd)
 
 		xinp=[]
 		for line in runProcess(cmd.split()):
 			if line != "":
 				#if line.strip() != "name,version":
-				xinp.append(line)
+				if "WARNING:" not in line and wshellsite in line:
+					xinp.append(line)
+					#print line
+					#with open("test.txt", "a") as myfile:
+					#    zz = str(line.split())
+					#    myfile.write(zz)
+					#    myfile.write("\r\n")
 				#print line
 		for x in xinp:
-			y = x.strip(wshellsite).replace(".php", "")
+			#y = x.strip(wshellsite).replace(".php", "")
+			y = x.replace(".php", "").replace("(i)", "").replace("(-)", "")
 			#y = y.split("    ")
 			#print y.strip()
 			
-			y = y.split(wshellsite,1)[1]
+			##y = y.split(wshellsite,1)[1]
 			#yArr = y.split(" ")
-			name2 = y.split(" ")[2].replace(" ", "")
-			name = "".join(name2.split())
+			#\y = filter(None, y)
+			#y = ' '.join(y).split()
+			print y
+			print y.split()
+			name2 = y.split()[2].replace(" ", "")
+			name = name2
+
+			##name = "".join(name2.split())
 			#if "." in name:
 			#	name = name.split(".")[0]
-			version = y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip().split(" ")[0]		#print y.split(name)
-			version = "".join(version.split())
+			#print "x"
+			#print y
+			#print y.split(" ")
+			#print name2
+			print name
+			#print y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip()
+			version = y.split(name2)[1].strip().split(" ")[0]		
+
+			# If the site name is long, the splits are different.  This should fix that
+			if "." in name:
+				name = y.split()[1].replace(" ", "")
+				version = y.split()[2].replace(" ", "")
+			#print y.split(name)
+			##version = "".join(version.split())
 			#y = y.strip()
 			#print y.strip()
 			#print y.replace(" ", "")
-			name = name[6:]
+			print version
+			name = name[:]
 			version = version[4:]
 
-			print ""
+			#with open("test.txt", "a") as myfile:
+			#		    myfile.write(name + " " + version)
+			#		    myfile.write(name + " " + "1.0")
+
+			#print ""
 			print name + " " + version
+			#print name + " " + "1.0"
 			#print "simple-ads-manager" + " " + "2.9.4.116"
 
 			#delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
@@ -178,10 +222,16 @@ def main(argv):
 				print out.strip()
 
 
-
-	check('core')
-	check('themes')
-	check('plugins')
+	if coreonly:
+		check('core')
+	elif themesonly:
+		check('themes')
+	elif pluginsonly:
+		check('plugins')
+	else:
+		check('core')
+		check('themes')
+		check('plugins')
 
 
 
