@@ -10,7 +10,7 @@ Uses [Wordshell](http://wordshell.net/) and [WPVulnDB](http://wpvulndb.com/).  R
 Useful for anyone using Wordshell who wants a quick check of vulnerable plugins and themes being used on the site.
 
 
-```
+
 # CommandLine Options
 ```
 usage: wsvulndb.py [-h] --site SITE [--vulnonly] [--coreonly] [--themesonly] [--pluginsonly] [--debug]
@@ -105,7 +105,7 @@ https://wpvulndb.com/api/v1/themes/twentysixteen
 (404)
 [+]  Theme : Twentysixteen : No Reported Security Issues
 
-
+```
 
 
 ## Basic working
