@@ -43,7 +43,7 @@ def check_vuln_status(name,version,report,type,debug):
 		if not report:
 			if debug:
 				print "(404)"
-			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
+			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
 	else:
 		data = json.loads(r.text)
 		for x in data[tag[type]]["vulnerabilities"]:
@@ -58,15 +58,15 @@ def check_vuln_status(name,version,report,type,debug):
 					if tag[type] == "wordpress":
 						name="core"
 					if vuln==0:
-						out = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name.capitalize() + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
+						out = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
 						vuln = vuln + 1
 					else:
-						out+= "\n" + bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name.capitalize() + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN +" Fixed in Version " + x["fixed_in"] + bcolors.ENDC
+						out+= "\n" + bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN +" Fixed in Version " + x["fixed_in"] + bcolors.ENDC
 					vuln = vuln + 1
 				else:
 					if vuln == 0:
 						if not report:
-							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name.capitalize() + " : No Reported Security Issues " + bcolors.ENDC
+							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
 						else:
 							if debug:
 								print "Nothing..."
@@ -75,9 +75,9 @@ def check_vuln_status(name,version,report,type,debug):
 						# vuln=0
 			else:
 				if vuln == 0:
-					out=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name.capitalize() + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
+					out=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
 				else:
-					out+=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name.capitalize() + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
+					out+=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
 				vuln = vuln + 1
 	return out
 
@@ -127,8 +127,12 @@ def main(argv):
 		for x in xinp:
 			y=x.replace(".","").strip()
 			# Hacked code here version is sent instead of plugin name and plug name is marked as blank
-			x = x[4:].replace(" ", "")
-			out=check_vuln_status(y,x,report,"wordpresses", debug)
+			x = x.replace(" ", "")
+			out = ''
+			if "." not in x:
+				print bcolors.FAIL + "Error: Wordpress version not found.  Please check wordshell is working correctly." + bcolors.ENDC
+			else:
+				out=check_vuln_status(y,x,report,"wordpresses", debug)
 			if out.strip() is not "":
 				print out.strip()
 
@@ -164,7 +168,10 @@ def main(argv):
 				#print line
 		for x in xinp:
 			#y = x.strip(wshellsite).replace(".php", "")
-			y = x.replace(".php", "").replace("(i)", "").replace("(-)", "")
+
+			##Remove all unwanted characters including bash formatting chars
+			y = x.replace(".php", "").replace("(i)", "").replace("(-)", "").replace("\x1b", "").replace("[1m", "").replace("(B[m", "")
+			
 			#y = y.split("    ")
 			#print y.strip()
 			
@@ -175,7 +182,14 @@ def main(argv):
 			if debug:
 				print y
 				print y.split()
-			name2 = y.split()[2].replace(" ", "")
+#				print y.split()[2].decode("utf-8")
+
+			#newlist1 = y.split()
+			#print newlist1
+			#newlist = [ x.replace("\x1b", "") for x in newlist1 ]
+			#print newlist
+			
+			name2 = y.split()[2]#.replace(" ", "")
 			name = name2
 
 			##name = "".join(name2.split())
@@ -188,9 +202,13 @@ def main(argv):
 			if debug:
 				print name
 			#print y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip()
-			version = y.split(name2)[1].strip().split(" ")[0]		
+			#version = y.split(name2)[1].strip().split(" ")[0]
+
+			version = y.split()[3]#.replace(" ", "")
+#			print version
 
 			# If the site name is long, the splits are different.  This should fix that
+			# This should no longer be the case.  Leaving in for now but should be rechecked later
 			if "." in name:
 				name = y.split()[1].replace(" ", "")
 				version = y.split()[2].replace(" ", "")
@@ -201,8 +219,8 @@ def main(argv):
 			#print y.replace(" ", "")
 			if debug:
 				print version
-			name = name[:]
-			version = version[4:]
+			#name = name[:]
+			#version = version[4:]
 
 			#with open("test.txt", "a") as myfile:
 			#		    myfile.write(name + " " + version)
