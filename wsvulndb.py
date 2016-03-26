@@ -36,9 +36,9 @@ def check_vuln_status(name,version,report,type,debug):
 	tag["wordpresses"]="wordpress"
 	tag["plugins"]="plugin"
 	tag["themes"]="theme"
-	r=requests.get("https://wpvulndb.com/api/v1/"+type+"/" + name)
+	r=requests.get("https://wpvulndb.com/api/v2/"+type+"/" + name)
 	if debug:
-		print "https://wpvulndb.com/api/v1/"+type+"/" + name
+		print "https://wpvulndb.com/api/v2/"+type+"/" + name
 	if r.status_code == 404:
 		if not report:
 			if debug:
@@ -46,14 +46,27 @@ def check_vuln_status(name,version,report,type,debug):
 			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
 	else:
 		data = json.loads(r.text)
-		for x in data[tag[type]]["vulnerabilities"]:
+		if debug: 
+			print data
+			print "version " + version
+
+		#Sometimes case matters - try to prevent case problems
+		if name.lower() in data:
+			name = name.lower()
+
+		if not data[name]["vulnerabilities"]:
+			out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
+		for x in data[name]["vulnerabilities"]:
 			#print "Is vulnerable"
 			#return str(x)
 			if x.has_key("fixed_in"):
 				#print "version: " + version 
 				#print "fixed in: " + str(versiontuple(x["fixed_in"]))
 				#print "versiontuple: " + str(versiontuple(version))
-				if versiontuple(x["fixed_in"]) > versiontuple(version):
+				if debug:
+					print "versiontuple " + str(versiontuple(version))
+					print "fixed in " + str(x["fixed_in"])
+				if x["fixed_in"] and versiontuple(version) and versiontuple(x["fixed_in"]) > versiontuple(version):
 					#print "Fixed.."
 					if tag[type] == "wordpress":
 						name="core"
@@ -64,7 +77,7 @@ def check_vuln_status(name,version,report,type,debug):
 						out+= "\n" + bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN +" Fixed in Version " + x["fixed_in"] + bcolors.ENDC
 					vuln = vuln + 1
 				else:
-					if vuln == 0:
+					if vuln == 0 and x["fixed_in"] != None:
 						if not report:
 							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
 						else:
@@ -73,6 +86,8 @@ def check_vuln_status(name,version,report,type,debug):
 							#print "-------------------1----------------"
 							out = ""
 						# vuln=0
+					else: # PLUGIN VULNERABLE AND FIX NOT AVAILBLE YET
+						out = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + " - NO FIX AVAILABLE YET" + bcolors.ENDC# + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
 			else:
 				if vuln == 0:
 					out=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
