@@ -171,8 +171,9 @@ def main(argv):
 		xinp=[]
 		for line in runProcess(cmd.split()):
 			if line != "":
+				#print line
 				#if line.strip() != "name,version":
-				if "WARNING:" not in line and wshellsite in line:
+				if "WARNING:" not in line and wshellsite in line or wshellsite == 'all':
 					xinp.append(line)
 					if debug:
 						print line
@@ -264,6 +265,7 @@ def main(argv):
 			out=check_vuln_status(name,version,report,type, debug)
 			if out.strip() is not "":
 				print out.strip()
+
 
 
 
