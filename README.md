@@ -25,6 +25,7 @@ optional arguments:
   --coreonly     Only check the core version
   --themesonly   Only check the themes
   --pluginsonly  Only check the plugins
+  --nosync       Don't sync; use cached plugins/themes only
   --debug        Provides extra information
 
 If none of --coreonly, --themesonly or --pluginsonly is specified, everything will be checked.
@@ -110,6 +111,10 @@ https://wpvulndb.com/api/v1/themes/twentysixteen
 
 ## Basic working
 Wordshell collects the names and version numbers of the core, themes and plugins.  This script parses that information, checks it via the WPVulnDB API and reports back.
+
+
+### Notes
+The progress tracker introduced in the most recent update isn't really accurate but is more there to show that *something* is happening.  However, it has a habit of staying on 1% for a looong time, particularly on sites with many plugins.  Sorry about that.
 
 
 
