@@ -6,6 +6,7 @@ import requests
 import json
 from pprint import pprint
 import os
+import time
 
 class bcolors:
     HEADER = '\033[95m'
@@ -17,16 +18,29 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def update_progress(progress):
+	if progress == 100:
+		print '\r[{0}] {1}%'.format('#'*(progress/10), progress)
+	else:
+	    print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
+
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
 
 def runProcess(exe):    
+    progress = 0
+
     p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
     while(True):
+      if (progress < 100):
+          progress += 1
+          update_progress(progress)
       retcode = p.poll() #returns None while subprocess is running
       line = p.stdout.readline()
       yield line
       if(retcode is not None):
+      	update_progress(100)
         break
 
 def check_vuln_status(name,version,report,type,debug):
@@ -111,6 +125,7 @@ def main(argv):
 	parser.add_argument("--coreonly",help="Only check core",action="store_true")
 	parser.add_argument("--themesonly",help="Only check themes",action="store_true")
 	parser.add_argument("--pluginsonly",help="Only check plugins",action="store_true")
+	parser.add_argument("--nosync",help="Skip initial sync of themes/plugins directory",action="store_true")
 	parser.add_argument("--debug",help="Prints extra info about what's going on",action="store_true")
 	if not cmd_exists("wordshell"):
 		print "Wordshell needs to be in path as executable named as wordshell"
@@ -122,6 +137,7 @@ def main(argv):
 	coreonly=x.coreonly
 	themesonly=x.themesonly
 	pluginsonly=x.pluginsonly
+	nosync=x.nosync
 	debug=x.debug
 
 	def check_core():
@@ -134,7 +150,7 @@ def main(argv):
 		for line in runProcess(cmd.split()):
 			if line != "":
 				#if line.strip() != "name,version":
-				line = ' '.join(line.split()).split(" ")[3]
+				line = ' '.join(line.split()).split(" ")[3] # IndexError: list index out of range - ERROR can occur here. This is a bug in wordshell.
 				xinp.append(line)
 				if debug:
 					print "Wordpress version: " + line
@@ -156,12 +172,20 @@ def main(argv):
 
 		if type == 'plugins':
 			# Check Plugin Issues
-			cmd="wordshell " + wshellsite + " --list"
-			print "Syncing & checking plugins"
+			if (nosync):
+				cmd="wordshell " + wshellsite + " --list --cache"
+				print "Checking cached plugins"
+			else:
+				cmd="wordshell " + wshellsite + " --list"
+				print "Syncing & checking plugins"
 		elif type == 'themes':
 			# Check theme issues
-			cmd="wordshell " + wshellsite + " --list --theme"
-			print "Syncing & checking themes"
+			if (nosync):
+				cmd="wordshell " + wshellsite + " --list --theme --cache"
+				print "Checking cached themes"
+			else:
+				cmd="wordshell " + wshellsite + " --list --theme"
+				print "Syncing & checking themes"
 		else:
 			check_core()
 			return
