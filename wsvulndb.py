@@ -4,9 +4,9 @@ import sys
 import subprocess
 import requests
 import json
-from pprint import pprint
-import os
-import time
+#from pprint import pprint
+#import os
+#import time
 
 class bcolors:
     HEADER = '\033[95m'
@@ -33,7 +33,7 @@ def runProcess(exe):
     p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     
     while(True):
-      if (progress < 100):
+      if (progress < 99):
           progress += 1
           update_progress(progress)
       retcode = p.poll() #returns None while subprocess is running

@@ -3,7 +3,7 @@
 # wsvulndb_commandline
 A very rough copy of https://github.com/anantshri/wpvulndb_commandline, modified for Wordshell
 
-Uses [Wordshell](http://wordshell.net/) and [WPVulnDB](http://wpvulndb.com/).  Requires Python 2.7
+Uses [Wordshell](http://wordshell.net/) and [WPVulnDB](http://wpvulndb.com/).  Requires Python 2.7 and [the Requests module](https://github.com/kennethreitz/requests)
 
 # Usage
 
