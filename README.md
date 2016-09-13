@@ -25,7 +25,7 @@ optional arguments:
   --coreonly     Only check the core version
   --themesonly   Only check the themes
   --pluginsonly  Only check the plugins
-  --nosync       Don't sync; use cached plugins/themes only
+  --sync         Sync before checking
   --debug        Provides extra information
 
 If none of --coreonly, --themesonly or --pluginsonly is specified, everything will be checked.

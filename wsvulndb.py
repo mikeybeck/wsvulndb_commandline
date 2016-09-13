@@ -125,7 +125,7 @@ def main(argv):
 	parser.add_argument("--coreonly",help="Only check core",action="store_true")
 	parser.add_argument("--themesonly",help="Only check themes",action="store_true")
 	parser.add_argument("--pluginsonly",help="Only check plugins",action="store_true")
-	parser.add_argument("--nosync",help="Skip initial sync of themes/plugins directory",action="store_true")
+	parser.add_argument("--sync",help="Sync themes/plugins directory before checking",action="store_true")
 	parser.add_argument("--debug",help="Prints extra info about what's going on",action="store_true")
 	if not cmd_exists("wordshell"):
 		print "Wordshell needs to be in path as executable named as wordshell"
@@ -137,7 +137,9 @@ def main(argv):
 	coreonly=x.coreonly
 	themesonly=x.themesonly
 	pluginsonly=x.pluginsonly
-	nosync=x.nosync
+	nosync=True
+	if x.sync:
+		nosync = False
 	debug=x.debug
 
 	def check_core():
