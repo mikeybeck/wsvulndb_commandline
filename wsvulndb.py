@@ -4,9 +4,6 @@ import sys
 import subprocess
 import requests
 import json
-#from pprint import pprint
-#import os
-#import time
 
 class bcolors:
     HEADER = '\033[95m'
@@ -19,10 +16,11 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def update_progress(progress):
+	progressPrintOut = '\r[{0}] {1}%'.format('#'*(progress/10), progress)
 	if progress == 100:
-		print '\r[{0}] {1}%'.format('#'*(progress/10), progress)
+	    print progressPrintOut
 	else:
-	    print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
+	    print progressPrintOut,
 
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
@@ -51,13 +49,14 @@ def check_vuln_status(name,version,report,type,debug):
 	tag["plugins"]="plugin"
 	tag["themes"]="theme"
 	r=requests.get("https://wpvulndb.com/api/v2/"+type+"/" + name)
+	noIssuesOutput = bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
 	if debug:
 		print "https://wpvulndb.com/api/v2/"+type+"/" + name
 	if r.status_code == 404:
 		if not report:
 			if debug:
-				print "(404)"
-			out+= bcolors.OKGREEN + "[+]  "+ tag[type].capitalize() +" : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
+				print "(404)"			
+			out+= noIssuesOutput
 	else:
 		data = json.loads(r.text)
 		if debug: 
@@ -69,44 +68,40 @@ def check_vuln_status(name,version,report,type,debug):
 			name = name.lower()
 
 		if not data[name]["vulnerabilities"]:
-			out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
+			out = noIssuesOutput
 		for x in data[name]["vulnerabilities"]:
-			#print "Is vulnerable"
-			#return str(x)
 			if x.has_key("fixed_in"):
-				#print "version: " + version 
-				#print "fixed in: " + str(versiontuple(x["fixed_in"]))
-				#print "versiontuple: " + str(versiontuple(version))
 				if debug:
 					print "versiontuple " + str(versiontuple(version))
 					print "fixed in " + str(x["fixed_in"])
 				if x["fixed_in"] and versiontuple(version) and versiontuple(x["fixed_in"]) > versiontuple(version):
+					hasIssuesOutput = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
 					#print "Fixed.."
 					if tag[type] == "wordpress":
 						name="core"
 					if vuln==0:
-						out = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
+						out = hasIssuesOutput
 						vuln = vuln + 1
 					else:
-						out+= "\n" + bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + bcolors.ENDC + bcolors.OKGREEN +" Fixed in Version " + x["fixed_in"] + bcolors.ENDC
+						out+= "\n" + hasIssuesOutput
 					vuln = vuln + 1
 				else:
 					if vuln == 0 and x["fixed_in"] != None:
 						if not report:
-							out = bcolors.OKGREEN + "[+]  " + tag[type].capitalize() + " : " + name + " v" + version.rstrip() + " : No Reported Security Issues " + bcolors.ENDC
+							out = noIssuesOutput
 						else:
 							if debug:
 								print "Nothing..."
-							#print "-------------------1----------------"
 							out = ""
 						# vuln=0
 					else: # PLUGIN VULNERABLE AND FIX NOT AVAILBLE YET
 						out = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to " + x["title"] + " - NO FIX AVAILABLE YET" + bcolors.ENDC# + bcolors.OKGREEN + " Fixed in  Version " + x["fixed_in"] + bcolors.ENDC
 			else:
+				output = bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
 				if vuln == 0:
-					out=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
+					out=output
 				else:
-					out+=bcolors.FAIL + "[-]  " + tag[type].capitalize() + " : " + name + " : " + version.rstrip()  + " : is Vulnerable to : " + x["title"] + bcolors.ENDC
+					out+=output
 				vuln = vuln + 1
 	return out
 
@@ -151,8 +146,10 @@ def main(argv):
 		xinp=[]
 		for line in runProcess(cmd.split()):
 			if line != "":
+				if "ERROR" in line and debug:
+					print "WORDSHELL ERROR: " + line
 				#if line.strip() != "name,version":
-				line = ' '.join(line.split()).split(" ")[3] # IndexError: list index out of range - ERROR can occur here. This is a bug in wordshell.
+				line = ' '.join(line.split()).split(" ")[3] # IndexError: list index out of range - ERROR can occur here. This is a bug in wordshell. (Try re-running the same command and report a bug if this happens again.)
 				xinp.append(line)
 				if debug:
 					print "Wordpress version: " + line
@@ -197,97 +194,39 @@ def main(argv):
 		xinp=[]
 		for line in runProcess(cmd.split()):
 			if line != "":
-				#print line
-				#if line.strip() != "name,version":
 				if "WARNING:" not in line and wshellsite in line or wshellsite == 'all':
 					xinp.append(line)
 					if debug:
 						print line
-					#with open("test.txt", "a") as myfile:
-					#    zz = str(line.split())
-					#    myfile.write(zz)
-					#    myfile.write("\r\n")
-				#print line
 		for x in xinp:
-			#y = x.strip(wshellsite).replace(".php", "")
 
 			##Remove all unwanted characters including bash formatting chars
 			y = x.replace(".php", "").replace("(i)", "").replace("(-)", "").replace("\x1b", "").replace("[1m", "").replace("(B[m", "")
 			
-			#y = y.split("    ")
-			#print y.strip()
-			
-			##y = y.split(wshellsite,1)[1]
-			#yArr = y.split(" ")
-			#\y = filter(None, y)
-			#y = ' '.join(y).split()
 			if debug:
 				print y
 				print y.split()
-#				print y.split()[2].decode("utf-8")
-
-			#newlist1 = y.split()
-			#print newlist1
-			#newlist = [ x.replace("\x1b", "") for x in newlist1 ]
-			#print newlist
 			
-			name2 = y.split()[2]#.replace(" ", "")
+			name2 = y.split()[2]
 			name = name2
 
-			##name = "".join(name2.split())
-			#if "." in name:
-			#	name = name.split(".")[0]
-			#print "x"
-			#print y
-			#print y.split(" ")
-			#print name2
 			if debug:
 				print name
-			#print y.split(name2)[1].replace("(i)", "").replace("(-)", "").strip()
-			#version = y.split(name2)[1].strip().split(" ")[0]
 
-			version = y.split()[3]#.replace(" ", "")
-#			print version
+			version = y.split()[3]
 
 			# If the site name is long, the splits are different.  This should fix that
-			# This should no longer be the case.  Leaving in for now but should be rechecked later
+			#  `-> This should no longer be the case.  Leaving in for now but should be rechecked later
 			if "." in name:
 				name = y.split()[1].replace(" ", "")
 				version = y.split()[2].replace(" ", "")
-			#print y.split(name)
-			##version = "".join(version.split())
-			#y = y.strip()
-			#print y.strip()
-			#print y.replace(" ", "")
+
 			if debug:
 				print version
-			#name = name[:]
-			#version = version[4:]
 
-			#with open("test.txt", "a") as myfile:
-			#		    myfile.write(name + " " + version)
-			#		    myfile.write(name + " " + "1.0")
-
-			#print ""
 			if debug:
 				print name + " " + version
-			#print name + " " + "1.0"
-			#print "simple-ads-manager" + " " + "2.9.4.116"
 
-			#delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
-			#name = name.translate(None, delchars)
-			#version = version.translate(None, delchars)
-
-			#import re
-			#name = re.sub(r'\W+', '', name)
-			#version = re.sub(r'\W+', '', version)
-
-			#f = open('workfile.txt', 'r+')
-			#f.write(name + " " + version)
-			#f.write("\r\n")
-			#f.write("simple-ads-manager" + " " + "2.9.4.116")
-			#with open("test.txt", "a") as myfile:
-			#    myfile.write(name + " " + version + "\r\n")
 			out=check_vuln_status(name,version,report,type, debug)
 			if out.strip() is not "":
 				print out.strip()
