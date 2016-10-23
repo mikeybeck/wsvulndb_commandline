@@ -116,6 +116,12 @@ Wordshell collects the names and version numbers of the core, themes and plugins
 ### Notes
 The progress tracker introduced in the most recent update isn't really accurate but is more there to show that *something* is happening.  However, it has a habit of staying on 1% for a looong time, particularly on sites with many plugins.  Sorry about that.
 
+### If you get the error `requests.exceptions.SSLError: hostname 'wpvulndb.com' doesn't match either of '*.sucuri.net', 'sucuri.net'`:
+Upgrade Python to at least version 2.7.9.
+Upgrade commands for third party repo:
+	`sudo add-apt-repository ppa:fkrull/deadsnakes-python2.7`
+	`sudo apt-get update`
+	`sudo apt-get install python2.7`
 
 
 
