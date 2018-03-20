@@ -202,7 +202,10 @@ def main(argv):
 
 			##Remove all unwanted characters including bash formatting chars
 			y = x.replace(".php", "").replace("(i)", "").replace("(-)", "").replace("\x1b", "").replace("[1m", "").replace("(B[m", "")
-			
+
+			if len(y.split()) < 3:
+				continue
+
 			if debug:
 				print y
 				print y.split()
