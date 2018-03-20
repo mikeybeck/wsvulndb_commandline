@@ -14,8 +14,8 @@ Useful for anyone using Wordshell who wants a quick check of vulnerable plugins 
 # CommandLine Options
 ```
 usage: wsvulndb.py [-h] --site SITE [--vulnonly] [--coreonly] [--themesonly] [--pluginsonly] [--debug]
-
-
+```
+```
 This program is used to run a quick wordpress scan via the wpscan API.
 
 optional arguments:
@@ -34,10 +34,11 @@ Credit (C) Anant Shrivastava http://anantshri.info - original script for wpcli
 and Mikey Beck - wordshell compatibility modifications
 ```
 
-##Examples:
+## Examples:
 ```
 python wsvulndb.py --site wpsite
-
+```
+```
 Syncing & checking core
 [+]  Wordpress : 442 : No Reported Security Issues
 Syncing & checking themes
@@ -55,12 +56,13 @@ Syncing & checking plugins
 [+]  Plugin : Woocommerce : No Reported Security Issues
 [+]  Plugin : Wordpress-seo-premium : No Reported Security Issues
 [+]  Plugin : Wpseo-woocommerce : No Reported Security Issues
+```
 
 
-
-
+```
 python wsvulndb.py --site wpsite --themesonly --debug
-
+```
+```
 Syncing & checking themes
 wpsite    storefront                          1.6.1                   Storefront
 
@@ -105,9 +107,7 @@ twentysixteen 1.1
 https://wpvulndb.com/api/v1/themes/twentysixteen
 (404)
 [+]  Theme : Twentysixteen : No Reported Security Issues
-
 ```
-
 
 ## Basic working
 Wordshell collects the names and version numbers of the core, themes and plugins.  This script parses that information, checks it via the WPVulnDB API and reports back.
